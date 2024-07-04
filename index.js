@@ -52,6 +52,11 @@ app.post("/upload", upload.single("xlsxFile"), async (req, res) => {
 
   for (let i = 0; i < xlData.length; i++) {
     const row = xlData[i];
+    if (!xlData[0].hasOwnProperty("Number")) {
+      return res
+        .status(400)
+        .send("Error: Missing 'Number' column in the uploaded file");
+    }
     const phoneNumber = "65" + row["Number"];
     try {
       const currentUrl = `${req.protocol}://${req.get("host")}`;
@@ -88,6 +93,11 @@ app.post("/upload", upload.single("xlsxFile"), async (req, res) => {
     });
     for (let i = 0; i < xlData2.length; i++) {
       const row = xlData2[i];
+      if (!xlData2[0].hasOwnProperty("Number")) {
+        return res
+          .status(400)
+          .send("Error: Missing 'Number' column in the uploaded file");
+      }
       const phoneNumber = "65" + row["Number"];
       try {
         const currentUrl = `${req.protocol}://${req.get("host")}`;
