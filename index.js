@@ -112,6 +112,43 @@ const start = async () => {
       return void res
         .status(404)
         .json({ error: "Number not available on WhatsApp" });
+    if (verification.has(jid)) {
+      const storedCode = verification.get(jid);
+      const remainingTime = ~~((storedCode.expiration - Date.now()) / 1000);
+      return void res.json({
+        cooldown: `Please wait for ${remainingTime} seconds`,
+      });
+    }
+    const code = Math.floor(100000 + Math.random() * 900000);
+    verification.set(jid, { code, expiration: Date.now() + 120000 });
+    await client.sendMessage(jid, { text: `Your OTP is ${code}` });
+    setTimeout(() => verification.delete(jid), 120000);
+    return void res
+      .status(200)
+      .setHeader("Content-Type", "text/plain")
+      .send("Open Your WhatsApp!");
+  });
+
+  app.all("/verify", async (req, res) => {
+    const { phone, code } = req.method === "GET" ? req.query : req.body;
+    if (!phone || !code) return void res.sendStatus(404);
+    const otp = parseInt(code);
+    const jid = correctJid(phone);
+    const valid = await validWhatsApp(jid);
+    if (!valid)
+      return void res
+        .status(404)
+        .json({ error: "Number not available on WhatsApp" });
+    const storedCode = verification.get(jid);
+    if (
+      !storedCode ||
+      Date.now() > storedCode?.expiration ||
+      otp !== storedCode?.code
+    )
+      return void res.status(400).json({ error: "Invalid or Expired Code" });
+    const successful = "Congratulations, You are verified!";
+    await client.sendMessage(jid, { text: successful });
+    return void res.json({ successful });
   });
 
   app.all("*", (req, res) => res.sendStatus(404));
