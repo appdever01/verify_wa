@@ -10,6 +10,9 @@ const { Boom } = require("@hapi/boom");
 const express = require("express");
 const fs = require("fs-extra");
 const cors = require("cors");
+const multer = require("multer");
+const axios = require("axios");
+const xlsx = require("xlsx");
 
 const app = express();
 const port = 3000;
@@ -18,6 +21,70 @@ const verification = new Map();
 app.set("json spaces", 2);
 app.use(express.json());
 app.use(cors());
+
+app.get("/", (req, res) => {
+  res.sendFile(__dirname + "/public/index.html");
+});
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads/"); // Save the file in the 'uploads' folder
+  },
+  filename: function (req, file, cb) {
+    cb(null, file.originalname);
+  },
+});
+
+const upload = multer({ storage: storage });
+
+app.post("/upload", upload.single("xlsxFile"), (req, res) => {
+  console.log("uploading...");
+  if (!req.file) {
+    return res.status(400).send("No file uploaded");
+  }
+
+  const workbook = xlsx.readFile(`uploads/${req.file.filename}`);
+  const sheet_name_list = workbook.SheetNames;
+  const xlData = xlsx.utils.sheet_to_json(workbook.Sheets[sheet_name_list[0]]);
+
+  xlData.forEach(async (row) => {
+    const phoneNumber = row["phone"];
+    console.log(phoneNumber);
+    const isWhatsApp = async () => {
+      try {
+        const response = await axios.get("/verifyNumber", {
+          params: {
+            phone: phoneNumber,
+          },
+        });
+        console.log(await response.data);
+        return await response.data;
+      } catch (error) {
+        console.error("Error verifying phone number:", error);
+        return false; // Return false in case of an error
+      }
+    };
+    console.log(isWhatsApp());
+
+    if (isWhatsApp) {
+      row["status"] = "WhatsApp Number";
+    } else {
+      row["status"] = "Not a WhatsApp Number";
+    }
+  });
+
+  // Write the updated data back to the Excel file
+  const newSheet = xlsx.utils.json_to_sheet(xlData);
+  const newWorkbook = xlsx.utils.book_new();
+  xlsx.utils.book_append_sheet(newWorkbook, newSheet, "Sheet1");
+  xlsx.writeFile(newWorkbook, `uploads/updated_file.xlsx`);
+
+  res.send("File uploaded successfully");
+});
+
+app.get("/download", (req, res) => {
+  res.download(__dirname + "/uploads/updated_file.xlsx");
+});
 
 const start = async () => {
   const { state, saveCreds } = await useMultiFileAuthState("session");
@@ -78,10 +145,6 @@ const start = async () => {
   const validWhatsApp = async (phone) =>
     (await client.onWhatsApp(phone))[0]?.exists || false;
 
-  app.get("/", (req, res) =>
-    res.status(200).setHeader("Content-Type", "text/plain").send("Running...")
-  );
-
   app.get("/wa/qr", async (req, res) => {
     const { session } = req.query;
     if (!session || !client || client.session !== req.query.session)
@@ -103,52 +166,13 @@ const start = async () => {
     res.status(200).contentType("image/png").send(client.QR);
   });
 
-  app.all("/request", async (req, res) => {
+  app.all("/verifyNumber", async (req, res) => {
     const { phone } = req.method === "GET" ? req.query : req.body;
     if (!phone) return void res.sendStatus(404);
     const jid = correctJid(phone);
     const valid = await validWhatsApp(jid);
-    if (!valid)
-      return void res
-        .status(404)
-        .json({ error: "Number not available on WhatsApp" });
-    if (verification.has(jid)) {
-      const storedCode = verification.get(jid);
-      const remainingTime = ~~((storedCode.expiration - Date.now()) / 1000);
-      return void res.json({
-        cooldown: `Please wait for ${remainingTime} seconds`,
-      });
-    }
-    const code = Math.floor(100000 + Math.random() * 900000);
-    verification.set(jid, { code, expiration: Date.now() + 120000 });
-    await client.sendMessage(jid, { text: `Your OTP is ${code}` });
-    setTimeout(() => verification.delete(jid), 120000);
-    return void res
-      .status(200)
-      .setHeader("Content-Type", "text/plain")
-      .send("Open Your WhatsApp!");
-  });
-
-  app.all("/verify", async (req, res) => {
-    const { phone, code } = req.method === "GET" ? req.query : req.body;
-    if (!phone || !code) return void res.sendStatus(404);
-    const otp = parseInt(code);
-    const jid = correctJid(phone);
-    const valid = await validWhatsApp(jid);
-    if (!valid)
-      return void res
-        .status(404)
-        .json({ error: "Number not available on WhatsApp" });
-    const storedCode = verification.get(jid);
-    if (
-      !storedCode ||
-      Date.now() > storedCode?.expiration ||
-      otp !== storedCode?.code
-    )
-      return void res.status(400).json({ error: "Invalid or Expired Code" });
-    const successful = "Congratulations, You are verified!";
-    await client.sendMessage(jid, { text: successful });
-    return void res.json({ successful });
+    console.log(`Loading .... ${valid}`);
+    res.json(valid);
   });
 
   app.all("*", (req, res) => res.sendStatus(404));
