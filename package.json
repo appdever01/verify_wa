@@ -1,0 +1,23 @@
+{
+  "name": "verifywhatsapp",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@periskope/whatsapp-web.js": "^1.23.1-alpha.exodus.16",
+    "@whiskeysockets/baileys": "^6.7.5",
+    "chalk": "^5.3.0",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "expressjs": "^1.0.1",
+    "nodemon": "^3.1.4",
+    "qr-image": "^3.2.0"
+  }
+}
