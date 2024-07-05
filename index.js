@@ -123,10 +123,10 @@ app.post("/upload", upload.single("xlsxFile"), async (req, res) => {
 });
 
 app.get("/progress", (req, res) => {
-  const sheet_name_list = workbook.SheetNames;
   if (!workbook) {
     res.status(400).json("Data not uploaded yet");
   }
+  const sheet_name_list = workbook.SheetNames;
   const sheet1Data = xlsx.utils.sheet_to_json(
     workbook.Sheets[sheet_name_list[0]]
   );
