@@ -28,7 +28,7 @@ app.get("/", (req, res) => {
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, "uploads/"); // Save the file in the 'uploads' folder
+    cb(null, "uploads/");
   },
   filename: function (req, file, cb) {
     cb(null, file.originalname);
@@ -37,7 +37,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-app.post("/upload", upload.single("xlsxFile"), (req, res) => {
+app.post("/upload", upload.single("xlsxFile"), async (req, res) => {
   console.log("uploading...");
   if (!req.file) {
     return res.status(400).send("No file uploaded");
@@ -46,37 +46,80 @@ app.post("/upload", upload.single("xlsxFile"), (req, res) => {
   const workbook = xlsx.readFile(`uploads/${req.file.filename}`);
   const sheet_name_list = workbook.SheetNames;
   const xlData = xlsx.utils.sheet_to_json(workbook.Sheets[sheet_name_list[0]]);
+  xlData.forEach((row) => {
+    row["status"] = "";
+  });
 
-  xlData.forEach(async (row) => {
-    const phoneNumber = row["phone"];
-    console.log(phoneNumber);
-    const isWhatsApp = async () => {
+  for (let i = 0; i < xlData.length; i++) {
+    const row = xlData[i];
+    if (!xlData[0].hasOwnProperty("Number")) {
+      return res
+        .status(400)
+        .send("Error: Missing 'Number' column in the uploaded file");
+    }
+    const phoneNumber = "65" + row["Number"];
+    try {
+      const currentUrl = `${req.protocol}://${req.get("host")}`;
+      const response = await axios.get(`${currentUrl}/verifyNumber`, {
+        params: {
+          phone: phoneNumber,
+        },
+      });
+      const isWhatsApp = response.data;
+
+      if (isWhatsApp) {
+        console.log(`Phone number is a WhatsApp number ${phoneNumber}`);
+        xlData[i]["status"] = "WhatsApp Number";
+      } else {
+        console.log(`Phone number is not a WhatsApp number ${phoneNumber}`);
+        xlData[i]["status"] = "Not a WhatsApp Number";
+      }
+    } catch (error) {
+      console.error("Error verifying phone number:", error);
+      xlData[i]["status"] = "Verification Error";
+    }
+  }
+
+  const newSheet = xlsx.utils.json_to_sheet(xlData);
+  const newWorkbook = xlsx.utils.book_new();
+  xlsx.utils.book_append_sheet(newWorkbook, newSheet, "Sheet1");
+
+  if (sheet_name_list.length > 1) {
+    const xlData2 = xlsx.utils.sheet_to_json(
+      workbook.Sheets[sheet_name_list[1]]
+    );
+    xlData2.forEach((row) => {
+      row["status"] = ""; // Initialize the 'status' field
+    });
+    for (let i = 0; i < xlData2.length; i++) {
+      const row = xlData2[i];
+
+      const phoneNumber = "65" + row["Number"];
       try {
-        const response = await axios.get("/verifyNumber", {
+        const currentUrl = `${req.protocol}://${req.get("host")}`;
+        const response = await axios.get(`${currentUrl}/verifyNumber`, {
           params: {
             phone: phoneNumber,
           },
         });
-        console.log(await response.data);
-        return await response.data;
+        const isWhatsApp = response.data;
+
+        if (isWhatsApp) {
+          console.log(`Phone number is a WhatsApp number ${phoneNumber}`);
+          xlData2[i]["status"] = "WhatsApp Number";
+        } else {
+          console.log(`Phone number is not a WhatsApp number ${phoneNumber}`);
+          xlData2[i]["status"] = "Not a WhatsApp Number";
+        }
       } catch (error) {
         console.error("Error verifying phone number:", error);
-        return false; // Return false in case of an error
+        xlData2[i]["status"] = "Verification Error";
       }
-    };
-    console.log(isWhatsApp());
-
-    if (isWhatsApp) {
-      row["status"] = "WhatsApp Number";
-    } else {
-      row["status"] = "Not a WhatsApp Number";
     }
-  });
+    const newSheet2 = xlsx.utils.json_to_sheet(xlData2);
+    xlsx.utils.book_append_sheet(newWorkbook, newSheet2, "Sheet2");
+  }
 
-  // Write the updated data back to the Excel file
-  const newSheet = xlsx.utils.json_to_sheet(xlData);
-  const newWorkbook = xlsx.utils.book_new();
-  xlsx.utils.book_append_sheet(newWorkbook, newSheet, "Sheet1");
   xlsx.writeFile(newWorkbook, `uploads/updated_file.xlsx`);
 
   res.send("File uploaded successfully");
@@ -171,7 +214,6 @@ const start = async () => {
     if (!phone) return void res.sendStatus(404);
     const jid = correctJid(phone);
     const valid = await validWhatsApp(jid);
-    console.log(`Loading .... ${valid}`);
     res.json(valid);
   });
 
@@ -182,4 +224,6 @@ const start = async () => {
 };
 
 start();
-app.listen(port, () => console.log(`Server started on PORT: ${port}`));
+app.listen(port, () =>
+  console.log(`Server started on PORT: http://localhost:${port}`)
+);
