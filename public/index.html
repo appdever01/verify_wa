@@ -129,21 +129,19 @@
       validateBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Validating...';
 
       fetch('/upload', {
-      method: 'POST',
-      body: formData
-    })
-      .then(response => {
-        validateBtn.innerHTML = 'Validate File'; // Reset button text after response
-        document.getElementById('downloadSection').classList.remove('d-none');
-        document.getElementById('downloadLink').setAttribute('href', '/download');
-        validateBtn.innerHTML = 'Validate File'; // Reset button text after response
+        method: 'POST',
+        body: formData
       })
-      .catch(error => {
-        validateBtn.innerHTML = 'Validate File'; // Reset button text after error
-        document.getElementById('fileAlert').classList.remove('alert-info');
-        document.getElementById('fileAlert').classList.add('alert-danger');
-        document.getElementById('fileAlert').innerHTML = 'Error: Number row not found';
-      });
+        .then(response => {
+          validateBtn.innerHTML = 'Validate File'; // Reset button text after response
+          document.getElementById('downloadSection').classList.remove('d-none');
+          document.getElementById('downloadLink').setAttribute('href', '/download');
+          validateBtn.innerHTML = 'Validate File'; // Reset button text after response
+        })
+        .catch(error => {
+          // Handle any errors that occur during the fetch
+          validateBtn.innerHTML = 'Validate File'; // Reset button text after error
+        });
     });
   </script>
   </script>
