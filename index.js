@@ -224,4 +224,6 @@ const start = async () => {
 };
 
 start();
-app.listen(port, () => console.log(`Server started on PORT: ${port}`));
+app.listen(port, () =>
+  console.log(`Server started on PORT: http://localhost:${port}`)
+);
