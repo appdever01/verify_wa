@@ -68,10 +68,8 @@ app.post("/upload", upload.single("xlsxFile"), async (req, res) => {
       const isWhatsApp = response.data;
 
       if (isWhatsApp) {
-        console.log(`Phone number is a WhatsApp number ${phoneNumber}`);
         xlData[i]["status"] = "WhatsApp Number";
       } else {
-        console.log(`Phone number is not a WhatsApp number ${phoneNumber}`);
         xlData[i]["status"] = "Not a WhatsApp Number";
       }
     } catch (error) {
@@ -105,10 +103,8 @@ app.post("/upload", upload.single("xlsxFile"), async (req, res) => {
         const isWhatsApp = response.data;
 
         if (isWhatsApp) {
-          console.log(`Phone number is a WhatsApp number ${phoneNumber}`);
           xlData2[i]["status"] = "WhatsApp Number";
         } else {
-          console.log(`Phone number is not a WhatsApp number ${phoneNumber}`);
           xlData2[i]["status"] = "Not a WhatsApp Number";
         }
       } catch (error) {
@@ -120,6 +116,21 @@ app.post("/upload", upload.single("xlsxFile"), async (req, res) => {
     xlsx.utils.book_append_sheet(newWorkbook, newSheet2, "Sheet2");
   }
 
+  app.get("/progress", (req, res) => {
+    const sheet1Data = xlsx.utils.sheet_to_json(
+      workbook.Sheets[sheet_name_list[0]]
+    );
+    const sheet2Data = xlsx.utils.sheet_to_json(
+      workbook.Sheets[sheet_name_list[1]]
+    );
+    const xlData = [...sheet1Data, ...sheet2Data];
+    const totalRows = xlData.length;
+    const totalChecked = xlData.filter((row) => row.status !== "").length;
+
+    console.log(totalChecked + "/" + totalRows);
+    const progress = (totalChecked / totalRows) * 100;
+    res.json({ totalRows, totalChecked, progress });
+  });
   xlsx.writeFile(newWorkbook, `uploads/updated_file.xlsx`);
 
   res.send("File uploaded successfully");

@@ -84,6 +84,10 @@
             <button type="submit" class="btn btn-success btn-block w-100 py-2" id="validateBtn">
               Validate File
             </button>
+            <div class="progress mt-4">
+              <div id="progressBar" class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0"
+                aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
             <div id="downloadSection" class="d-none mt-3">
               <a id="downloadLink" class="btn btn-dark text-white w-100 py-2" href="#" download><i
                   class="fa fa-file-excel" style="padding-right: 6px !important;"></i> Download Updated File</a>
@@ -101,9 +105,11 @@
   <div>
     <div class="footer">
       <hr width="95%" class="mx-auto">
-      <p class="text-center">© Copyright 2024 | Copyisright</p>
+      <p class="text-center">© Copyright 2024</p>
     </div>
   </div>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
   <script>
 
     document.getElementById('inputFile').onchange = function () {
@@ -117,6 +123,25 @@
       document.getElementById('fileName').textContent = '';
       document.getElementById('fileAlert').classList.add('d-none');
     }
+    const fileInput = document.getElementById('inputFile');
+
+    fileInput.addEventListener('change', function () {
+      const file = fileInput.files[0];
+      if (file) {
+        if (file.name.endsWith('.xlsx')) {
+
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'Invalid File',
+            text: 'Please select a valid xlsx file.'
+          });
+          document.getElementById('inputFile').value = '';
+          document.getElementById('fileName').textContent = '';
+          document.getElementById('fileAlert').classList.add('d-none');
+        }
+      }
+    });
     document.querySelector('form').addEventListener('submit', function (event) {
       event.preventDefault(); // Prevent default form submission
 
@@ -128,21 +153,48 @@
       const validateBtn = document.getElementById('validateBtn');
       validateBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Validating...';
 
-      fetch('/upload', {
+      function updateProgressBar() {
+        fetch("https://spanel.tekcify.com/progress")
+          .then(response => response.json())
+          .then(data => {
+            const progress = data.progress;
+            document.getElementById('progressBar').style.width = progress + '%';
+            document.getElementById('progressBar').setAttribute('aria-valuenow', progress);
+          });
+      }
+
+      document.addEventListener('DOMContentLoaded', function () {
+        updateProgressBar();
+        setInterval(updateProgressBar, 5000);
+      });
+
+      fetch('https://spanel.tekcify.com/upload', {
         method: 'POST',
         body: formData
       })
         .then(response => {
-          validateBtn.innerHTML = 'Validate File'; // Reset button text after response
-          document.getElementById('downloadSection').classList.remove('d-none');
-          document.getElementById('downloadLink').setAttribute('href', '/download');
-          validateBtn.innerHTML = 'Validate File'; // Reset button text after response
+          if (response.status === 400) {
+            Swal.fire({
+              icon: 'error',
+              title: 'Error !!!',
+              text: 'Selected file does not have "Number" column.'
+            });
+            document.getElementById('inputFile').value = '';
+            document.getElementById('fileName').textContent = '';
+            document.getElementById('fileAlert').classList.add('d-none');
+          } else {
+            validateBtn.innerHTML = 'Validate File'; // Reset button text after response
+            document.getElementById('downloadSection').classList.remove('d-none');
+            document.getElementById('downloadLink').setAttribute('href', 'https://spanel.tekcify.com/download');
+            validateBtn.innerHTML = 'Validate File'; // Reset button text after response
+          }
         })
         .catch(error => {
           // Handle any errors that occur during the fetch
           validateBtn.innerHTML = 'Validate File'; // Reset button text after error
         });
     });
+
   </script>
   </script>
 </body>
