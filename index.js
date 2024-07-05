@@ -116,25 +116,6 @@ app.post("/upload", upload.single("xlsxFile"), async (req, res) => {
     xlsx.utils.book_append_sheet(newWorkbook, newSheet2, "Sheet2");
   }
 
-  app.get("/progress", (req, res) => {
-    const sheet1Data = xlsx.utils.sheet_to_json(
-      workbook.Sheets[sheet_name_list[0]]
-    );
-    let sheet2Data;
-    if (sheet_name_list.length > 1) {
-      sheet2Data = xlsx.utils.sheet_to_json(
-        workbook.Sheets[sheet_name_list[1]]
-      );
-    }
-
-    const xlData = [...sheet1Data, ...sheet2Data];
-    const totalRows = xlData.length;
-    const totalChecked = xlData.filter((row) => row.status !== "").length;
-
-    console.log(totalChecked + "/" + totalRows);
-    const progress = (totalChecked / totalRows) * 100;
-    res.json({ totalRows, totalChecked, progress });
-  });
   xlsx.writeFile(newWorkbook, `uploads/updated_file.xlsx`);
 
   res.send("File uploaded successfully");
@@ -143,7 +124,23 @@ app.post("/upload", upload.single("xlsxFile"), async (req, res) => {
 app.get("/download", (req, res) => {
   res.download(__dirname + "/uploads/updated_file.xlsx");
 });
+app.get("/progress", (req, res) => {
+  const sheet1Data = xlsx.utils.sheet_to_json(
+    workbook.Sheets[sheet_name_list[0]]
+  );
+  let sheet2Data;
+  if (sheet_name_list.length > 1) {
+    sheet2Data = xlsx.utils.sheet_to_json(workbook.Sheets[sheet_name_list[1]]);
+  }
 
+  const xlData = [...sheet1Data, ...sheet2Data];
+  const totalRows = xlData.length;
+  const totalChecked = xlData.filter((row) => row.status !== "").length;
+
+  console.log(totalChecked + "/" + totalRows);
+  const progress = (totalChecked / totalRows) * 100;
+  res.json({ totalRows, totalChecked, progress });
+});
 const start = async () => {
   const { state, saveCreds } = await useMultiFileAuthState("session");
   const client = Baileys({
