@@ -124,7 +124,7 @@ app.post("/upload", upload.single("xlsxFile"), async (req, res) => {
 
 app.get("/progress", (req, res) => {
   if (!workbook) {
-    res.statusCode(400).json("Data not uploaded yet");
+    res.status(400).json("Data not uploaded yet");
   }
   const sheet1Data = xlsx.utils.sheet_to_json(
     workbook.Sheets[sheet_name_list[0]]
