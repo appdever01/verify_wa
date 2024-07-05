@@ -36,6 +36,7 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage: storage });
+let workbook;
 
 app.post("/upload", upload.single("xlsxFile"), async (req, res) => {
   console.log("uploading...");
@@ -43,7 +44,7 @@ app.post("/upload", upload.single("xlsxFile"), async (req, res) => {
     return res.status(400).send("No file uploaded");
   }
 
-  const workbook = xlsx.readFile(`uploads/${req.file.filename}`);
+  workbook = xlsx.readFile(`uploads/${req.file.filename}`);
   const sheet_name_list = workbook.SheetNames;
   const xlData = xlsx.utils.sheet_to_json(workbook.Sheets[sheet_name_list[0]]);
   xlData.forEach((row) => {
@@ -121,9 +122,6 @@ app.post("/upload", upload.single("xlsxFile"), async (req, res) => {
   res.send("File uploaded successfully");
 });
 
-app.get("/download", (req, res) => {
-  res.download(__dirname + "/uploads/updated_file.xlsx");
-});
 app.get("/progress", (req, res) => {
   const sheet1Data = xlsx.utils.sheet_to_json(
     workbook.Sheets[sheet_name_list[0]]
@@ -141,6 +139,11 @@ app.get("/progress", (req, res) => {
   const progress = (totalChecked / totalRows) * 100;
   res.json({ totalRows, totalChecked, progress });
 });
+
+app.get("/download", (req, res) => {
+  res.download(__dirname + "/uploads/updated_file.xlsx");
+});
+
 const start = async () => {
   const { state, saveCreds } = await useMultiFileAuthState("session");
   const client = Baileys({
