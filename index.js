@@ -59,7 +59,7 @@ app.post("/upload", upload.single("xlsxFile"), async (req, res) => {
     }
     const phoneNumber = "65" + row["Number"];
     try {
-      const currentUrl = `${req.protocol}://${req.get("host")}`;
+      const currentUrl = `https://spanel.tekcify.com`;
       const response = await axios.get(`${currentUrl}/verifyNumber`, {
         params: {
           phone: phoneNumber,
