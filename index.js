@@ -130,7 +130,7 @@ app.get("/progress", (req, res) => {
   const sheet1Data = xlsx.utils.sheet_to_json(
     workbook.Sheets[sheet_name_list[0]]
   );
-  let sheet2Data;
+  let sheet2Data = [];
   if (sheet_name_list.length > 1) {
     sheet2Data = xlsx.utils.sheet_to_json(workbook.Sheets[sheet_name_list[1]]);
   }
