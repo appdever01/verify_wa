@@ -5,16 +5,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>WhatsApp Number Validator</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
-    integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
-    integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A=="
-    crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="bootstrap.css">
+  <link rel="stylesheet" href="fontawesome.css">
 
   <style>
     body {
       background-color: #f7f7f9;
     }
+
 
     .inputDnD {
       height: 8rem;
@@ -76,6 +74,14 @@
               id="inputFile" onchange="readUrl(this)" data-title="Drag and drop a file" />
           </div>
           <hr style="opacity: .1;">
+          <div class="progress ">
+            <div id="progressBar" class="progress-bar bg-success" role="progressbar" style="width: 0%;"
+              aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+          </div>
+          <p class="mt-2 d-none" style="text-align: right;font-size: 14px;" id="verify_rate"><span id="checked"></span>/
+            <span id="totalchecked"></span>
+          </p>
+          <hr style="opacity: .1;">
           <div id="fileAlert" class=" d-none" role="alert">
             <div class="d-flex alert alert-info justify-content-between">
               <span id="fileName"><i class="fa fa-file-excel pr-2"></i></span>
@@ -84,10 +90,7 @@
             <button type="submit" class="btn btn-success btn-block w-100 py-2" id="validateBtn">
               Validate File
             </button>
-            <div class="progress mt-4">
-              <div id="progressBar" class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0"
-                aria-valuemin="0" aria-valuemax="100"></div>
-            </div>
+
             <div id="downloadSection" class="d-none mt-3">
               <a id="downloadLink" class="btn btn-dark text-white w-100 py-2" href="#" download><i
                   class="fa fa-file-excel" style="padding-right: 6px !important;"></i> Download Updated File</a>
@@ -126,6 +129,19 @@
     const fileInput = document.getElementById('inputFile');
 
     fileInput.addEventListener('change', function () {
+      fetch('https://spanel.tekcify.com/deleteFiles', {
+        method: 'DELETE'
+      })
+        .then(response => {
+          if (response.ok) {
+            console.log('Files deleted successfully');
+          } else {
+            console.error('Failed to delete files');
+          }
+        })
+        .catch(error => {
+          console.error('Error deleting files:', error);
+        });
       const file = fileInput.files[0];
       if (file) {
         if (file.name.endsWith('.xlsx')) {
@@ -155,18 +171,33 @@
 
       function updateProgressBar() {
         fetch("https://spanel.tekcify.com/progress")
-          .then(response => response.json())
+          .then(response => {
+            if (response.status !== 400) {
+
+              return response.json();
+            } else {
+              throw new Error('Invalid status code');
+            }
+          })
           .then(data => {
+
             const progress = data.progress;
+            document.getElementById('verify_rate').classList.remove('d-none');
+            document.getElementById('checked').innerText = data.totalChecked
+            document.getElementById('totalchecked').innerText = data.totalRows
             document.getElementById('progressBar').style.width = progress + '%';
             document.getElementById('progressBar').setAttribute('aria-valuenow', progress);
+
+
+          })
+          .catch(error => {
+            console.error('Error fetching progress data:', error);
           });
       }
 
-      document.addEventListener('DOMContentLoaded', function () {
-        updateProgressBar();
-        setInterval(updateProgressBar, 5000);
-      });
+
+      setInterval(updateProgressBar, 100);
+
 
       fetch('https://spanel.tekcify.com/upload', {
         method: 'POST',
@@ -178,7 +209,7 @@
               icon: 'error',
               title: 'Error !!!',
               text: 'Selected file does not have "Number" column.'
-            });
+            }).then(() => location.reload());
             document.getElementById('inputFile').value = '';
             document.getElementById('fileName').textContent = '';
             document.getElementById('fileAlert').classList.add('d-none');
