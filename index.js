@@ -127,6 +127,7 @@ app.get("/progress", (req, res) => {
   if (!workbook) {
     res.status(400).json("Data not uploaded yet");
   } else {
+    workbook = xlsx.readFile(`uploads/updated_file.xlsx`);
     const sheet_name_list = workbook.SheetNames;
     const sheet1Data = xlsx.utils.sheet_to_json(
       workbook.Sheets[sheet_name_list[0]]
