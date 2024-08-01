@@ -139,7 +139,9 @@ app.get("/progress", (req, res) => {
 
     const xlData = [...sheet1Data, ...sheet2Data];
     const totalRows = xlData.length;
-    const totalChecked = xlData.filter((row) => row.status !== "").length;
+    const totalChecked = xlData.filter(
+      (row) => row.hasOwnProperty("status") && row.status !== ""
+    ).length;
 
     console.log(totalChecked + "/" + totalRows);
     const progress = (totalChecked / totalRows) * 100;
