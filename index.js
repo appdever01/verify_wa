@@ -94,6 +94,7 @@ app.post("/upload", upload.single("xlsxFile"), async (req, res) => {
       const row = xlData2[i];
 
       const phoneNumber = "65" + row["Number"];
+
       try {
         const currentUrl = `${req.protocol}://${req.get("host")}`;
         const response = await axios.get(`${currentUrl}/verifyNumber`, {
