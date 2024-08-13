@@ -123,6 +123,18 @@ app.post("/upload", upload.single("xlsxFile"), async (req, res) => {
   res.send("File uploaded successfully");
 });
 
+app.delete("/deleteFiles", (req, res) => {
+  fs.emptyDir("uploads")
+    .then(() => {
+      console.log("Uploads folder cleared");
+      res.status(200).send("Uploads folder cleared");
+    })
+    .catch((err) => {
+      console.error("Error clearing uploads folder:", err);
+      res.status(500).send("Error clearing uploads folder");
+    });
+});
+
 app.get("/progress", (req, res) => {
   if (!workbook) {
     res.status(400).json("Data not uploaded yet");

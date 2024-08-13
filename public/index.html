@@ -15,7 +15,6 @@
       background-color: #f7f7f9;
     }
 
-
     .inputDnD {
       height: 8rem;
     }
@@ -45,10 +44,6 @@
       border: 0.2em dashed currentColor;
       overflow: hidden;
     }
-
-
-
-
 
     .footer {
       position: fixed;
@@ -102,9 +97,6 @@
         </div>
       </form>
     </div>
-
-
-
   </div>
 
   <div>
@@ -116,7 +108,6 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
   <script>
-
     document.getElementById('inputFile').onchange = function () {
       const fileName = this.files[0].name;
       document.getElementById('fileName').innerHTML = `<i class="fa fa-file-excel" style="padding-right: 6px !important;"></i> ${fileName} `;
@@ -127,10 +118,8 @@
       document.getElementById('inputFile').value = '';
       document.getElementById('fileName').textContent = '';
       document.getElementById('fileAlert').classList.add('d-none');
-    }
-    const fileInput = document.getElementById('inputFile');
-
-    fileInput.addEventListener('change', function () {
+      document.getElementById('verify_rate').classList.add('d-none');
+      document.getElementById('progressBar').style.width = 0
       fetch('https://spanel.tekcify.com/deleteFiles', {
         method: 'DELETE'
       })
@@ -144,10 +133,32 @@
         .catch(error => {
           console.error('Error deleting files:', error);
         });
+
+    }
+
+    const fileInput = document.getElementById('inputFile');
+
+    fileInput.addEventListener('change', function () {
+      document.getElementById('verify_rate').classList.add('d-none');
+      document.getElementById('progressBar').style.width = 0
+      fetch('https://spanel.tekcify.com/deleteFiles', {
+        method: 'DELETE'
+      })
+        .then(response => {
+          if (response.ok) {
+            console.log('Files deleted successfully');
+          } else {
+            console.error('Failed to delete files');
+          }
+        })
+        .catch(error => {
+          console.error('Error deleting files:', error);
+        });
+
       const file = fileInput.files[0];
       if (file) {
         if (file.name.endsWith('.xlsx')) {
-
+          // Do nothing if the file is valid
         } else {
           Swal.fire({
             icon: 'error',
@@ -160,9 +171,12 @@
         }
       }
     });
+
+    let intervalId;
+
     document.querySelector('form').addEventListener('submit', function (event) {
       event.preventDefault(); // Prevent default form submission
-
+      alert('Doing again')
       const fileInput = document.getElementById('inputFile');
       const file = fileInput.files[0];
       const formData = new FormData();
@@ -171,35 +185,50 @@
       const validateBtn = document.getElementById('validateBtn');
       validateBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Validating...';
 
+      let count = 0;
+      let totalcount = 0;
+
       function updateProgressBar() {
         fetch("https://spanel.tekcify.com/progress")
           .then(response => {
             if (response.status !== 400) {
-
               return response.json();
             } else {
               throw new Error('Invalid status code');
             }
           })
           .then(data => {
+            totalcount = data.totalRows;
+            if (count < totalcount) {
+              count += 1;
+            }
 
             const progress = data.progress;
             document.getElementById('verify_rate').classList.remove('d-none');
-            document.getElementById('checked').innerText = data.totalChecked
-            document.getElementById('totalchecked').innerText = data.totalRows
-            document.getElementById('progressBar').style.width = progress + '%';
+            document.getElementById('checked').innerText = count;
+            document.getElementById('totalchecked').innerText = data.totalRows;
+            document.getElementById('progressBar').style.width = ((count / data.totalRows) * 100) + '%';
             document.getElementById('progressBar').setAttribute('aria-valuenow', progress);
 
-
+            if (count >= totalcount) {
+              clearInterval(intervalId); // Clear the interval
+              validateBtn.innerHTML = 'Validate File'; // Reset button text after response
+              document.getElementById('downloadSection').classList.remove('d-none');
+              document.getElementById('downloadLink').setAttribute('href', 'https://spanel.tekcify.com/download');
+              validateBtn.innerHTML = 'Validate File';
+            }
           })
           .catch(error => {
             console.error('Error fetching progress data:', error);
           });
       }
 
+      // Clear any existing interval to avoid multiple intervals running simultaneously
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
 
-      setInterval(updateProgressBar, 100);
-
+      intervalId = setInterval(updateProgressBar, 100);
 
       fetch('https://spanel.tekcify.com/upload', {
         method: 'POST',
@@ -215,11 +244,6 @@
             document.getElementById('inputFile').value = '';
             document.getElementById('fileName').textContent = '';
             document.getElementById('fileAlert').classList.add('d-none');
-          } else {
-            validateBtn.innerHTML = 'Validate File'; // Reset button text after response
-            document.getElementById('downloadSection').classList.remove('d-none');
-            document.getElementById('downloadLink').setAttribute('href', 'https://spanel.tekcify.com/download');
-            validateBtn.innerHTML = 'Validate File'; // Reset button text after response
           }
         })
         .catch(error => {
@@ -227,8 +251,6 @@
           validateBtn.innerHTML = 'Validate File'; // Reset button text after error
         });
     });
-
-  </script>
   </script>
 </body>
 
