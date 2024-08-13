@@ -141,19 +141,7 @@
     fileInput.addEventListener('change', function () {
       document.getElementById('verify_rate').classList.add('d-none');
       document.getElementById('progressBar').style.width = 0
-      fetch('https://spanel.tekcify.com/deleteFiles', {
-        method: 'DELETE'
-      })
-        .then(response => {
-          if (response.ok) {
-            console.log('Files deleted successfully');
-          } else {
-            console.error('Failed to delete files');
-          }
-        })
-        .catch(error => {
-          console.error('Error deleting files:', error);
-        });
+
 
       const file = fileInput.files[0];
       if (file) {
@@ -216,6 +204,19 @@
               document.getElementById('downloadSection').classList.remove('d-none');
               document.getElementById('downloadLink').setAttribute('href', 'https://spanel.tekcify.com/download');
               validateBtn.innerHTML = 'Validate File';
+              fetch('https://spanel.tekcify.com/deleteFiles', {
+                method: 'DELETE'
+              })
+                .then(response => {
+                  if (response.ok) {
+                    console.log('Files deleted successfully');
+                  } else {
+                    console.error('Failed to delete files');
+                  }
+                })
+                .catch(error => {
+                  console.error('Error deleting files:', error);
+                });
             }
           })
           .catch(error => {

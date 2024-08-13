@@ -124,17 +124,25 @@ app.post("/upload", upload.single("xlsxFile"), async (req, res) => {
 });
 
 app.delete("/deleteFiles", (req, res) => {
-  fs.emptyDir("uploads")
-    .then(() => {
-      console.log("Uploads folder cleared");
-      res.status(200).send("Uploads folder cleared");
-    })
-    .catch((err) => {
-      console.error("Error clearing uploads folder:", err);
-      res.status(500).send("Error clearing uploads folder");
-    });
-});
+  fs.readdir("uploads", (err, files) => {
+    if (err) {
+      console.error("Error reading uploads folder:", err);
+      return res.status(500).send("Error reading uploads folder");
+    }
 
+    const filesToDelete = files.filter((file) => file !== "update_file.xlsx");
+
+    Promise.all(filesToDelete.map((file) => fs.unlink(`uploads/${file}`)))
+      .then(() => {
+        console.log("Files deleted successfully");
+        res.status(200).send("Files deleted successfully");
+      })
+      .catch((err) => {
+        console.error("Error deleting files:", err);
+        res.status(500).send("Error deleting files");
+      });
+  });
+});
 app.get("/progress", (req, res) => {
   if (!workbook) {
     res.status(400).json("Data not uploaded yet");
