@@ -144,33 +144,27 @@ app.delete("/deleteFiles", (req, res) => {
   });
 });
 app.get("/progress", (req, res) => {
-  if (!workbook) {
-    res.status(400).json("Data not uploaded yet");
-  } else {
-    workbook = xlsx.readFile(`uploads/updated_file.xlsx`);
-    const sheet_name_list = workbook.SheetNames;
-    const sheet1Data = xlsx.utils.sheet_to_json(
-      workbook.Sheets[sheet_name_list[0]]
-    );
-    let sheet2Data = [];
-    if (sheet_name_list.length > 1) {
-      sheet2Data = xlsx.utils.sheet_to_json(
-        workbook.Sheets[sheet_name_list[1]]
-      );
-    }
-
-    const xlData = [...sheet1Data, ...sheet2Data];
-
-    const totalRows = xlData.length;
-
-    const totalChecked = xlData.filter(
-      (row) => row.hasOwnProperty("status") && row.status !== ""
-    ).length;
-
-    console.log(totalChecked + "/" + totalRows);
-    const progress = (totalChecked / totalRows) * 100;
-    res.json({ totalRows, totalChecked, progress });
+  workbook = xlsx.readFile(`uploads/updated_file.xlsx`);
+  const sheet_name_list = workbook.SheetNames;
+  const sheet1Data = xlsx.utils.sheet_to_json(
+    workbook.Sheets[sheet_name_list[0]]
+  );
+  let sheet2Data = [];
+  if (sheet_name_list.length > 1) {
+    sheet2Data = xlsx.utils.sheet_to_json(workbook.Sheets[sheet_name_list[1]]);
   }
+
+  const xlData = [...sheet1Data, ...sheet2Data];
+
+  const totalRows = xlData.length;
+
+  const totalChecked = xlData.filter(
+    (row) => row.hasOwnProperty("status") && row.status !== ""
+  ).length;
+
+  console.log(totalChecked + "/" + totalRows);
+  const progress = (totalChecked / totalRows) * 100;
+  res.json({ totalRows, totalChecked, progress });
 });
 
 app.get("/download", (req, res) => {
