@@ -167,7 +167,11 @@ app.get("/progress", (req, res) => {
 });
 
 app.get("/download", (req, res) => {
-  res.download(__dirname + "/uploads/updated_file.xlsx");
+  if (fs.existsSync(__dirname + "/uploads/updated_file.xlsx")) {
+    res.download(__dirname + "/uploads/updated_file.xlsx");
+  } else {
+    res.send("File not found");
+  }
 });
 
 const start = async () => {

@@ -108,23 +108,6 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
   <script>
-
-    function checkDownloadLink() {
-      fetch('/download')
-        .then(response => response.text())
-        .then(data => {
-          if (data !== 'File not found') {
-            document.getElementById('downloadSection').classList.remove('d-none');
-            document.getElementById('downloadLink').setAttribute('href', 'https://spanel.tekcify.com/download');
-          } else {
-            console.error('File not found');
-          }
-        })
-        .catch(error => {
-          console.error('Error checking download link:', error);
-        });
-    }
-
     document.getElementById('inputFile').onchange = function () {
       const fileName = this.files[0].name;
       document.getElementById('fileName').innerHTML = `<i class="fa fa-file-excel" style="padding-right: 6px !important;"></i> ${fileName} `;
@@ -234,8 +217,9 @@
             if (count >= totalcount) {
               clearInterval(intervalId); // Clear the interval
               validateBtn.innerHTML = 'Validate File'; // Reset button text after response
-
-              checkDownloadLink()
+              document.getElementById('downloadSection').classList.remove('d-none');
+              document.getElementById('downloadLink').setAttribute('href', 'https://spanel.tekcify.com/download');
+              validateBtn.innerHTML = 'Validate File';
 
             }
           })
@@ -249,7 +233,7 @@
         clearInterval(intervalId);
       }
 
-      intervalId = setInterval(updateProgressBar, 400);
+      intervalId = setInterval(updateProgressBar, 100);
 
       fetch('https://spanel.tekcify.com/upload', {
         method: 'POST',
