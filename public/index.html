@@ -110,7 +110,7 @@
   <script>
 
     function checkDownloadLink() {
-      fetch('/download')
+      fetch('https://spanel.tekcify.com/download')
         .then(response => response.text())
         .then(data => {
           if (data !== 'File not found') {
@@ -249,7 +249,7 @@
         clearInterval(intervalId);
       }
 
-      intervalId = setInterval(updateProgressBar, 400);
+      intervalId = setInterval(updateProgressBar, 100);
 
       fetch('https://spanel.tekcify.com/upload', {
         method: 'POST',
