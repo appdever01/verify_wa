@@ -88,8 +88,9 @@ app.post("/upload", upload.single("xlsxFile"), async (req, res) => {
   }
 
   xlsx.writeFile(newWorkbook, `uploads/updated_file.xlsx`, (err) => {
+    console.log(err);
     if (err) {
-      res.status(500).send(`Error writing the file ${err}`);
+      //res.status(500).send(`Error writing the file ${err}`);
     } else {
       res.send("File uploaded successfully");
     }
