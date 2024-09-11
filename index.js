@@ -86,8 +86,13 @@ app.post("/upload", upload.single("xlsxFile"), async (req, res) => {
     xlsx.utils.book_append_sheet(newWorkbook, newSheet2, "Sheet2");
   }
 
-  xlsx.writeFile(newWorkbook, `uploads/updated_file.xlsx`);
-  res.send("File uploaded successfully");
+  xlsx.writeFile(newWorkbook, `uploads/updated_file.xlsx`, (err) => {
+    if (err) {
+      res.status(500).send(`Error writing the file ${err}`);
+    } else {
+      res.send("File uploaded successfully");
+    }
+  });
 });
 
 app.delete("/deleteFiles", (req, res) => {
