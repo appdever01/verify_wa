@@ -52,7 +52,7 @@ app.post("/upload", upload.single("xlsxFile"), async (req, res) => {
     return res.status(400).send("No file uploaded");
   }
 
-  workbook = xlsx.readFile(`uploads/${req.file.filename}`);
+  workbook = xlsx.readFile(`uploads/${req.file.filename.replace("'", "")}`);
   const sheet_name_list = workbook.SheetNames;
   const xlData = xlsx.utils.sheet_to_json(workbook.Sheets[sheet_name_list[0]]);
   xlData.forEach((row) => (row["status"] = ""));
@@ -60,6 +60,7 @@ app.post("/upload", upload.single("xlsxFile"), async (req, res) => {
   const currentUrl = `https://spanel.tekcify.com`;
   for (let i = 0; i < xlData.length; i++) {
     const row = xlData[i];
+    print(row);
     if (!row.hasOwnProperty("Number")) {
       return res
         .status(400)
