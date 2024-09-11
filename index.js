@@ -60,7 +60,7 @@ app.post("/upload", upload.single("xlsxFile"), async (req, res) => {
   const currentUrl = `https://spanel.tekcify.com`;
   for (let i = 0; i < xlData.length; i++) {
     const row = xlData[i];
-    print(row);
+    console.log(row);
     if (!row.hasOwnProperty("Number")) {
       return res
         .status(400)
